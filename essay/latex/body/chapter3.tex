@@ -1,0 +1,65 @@
+\section{数据预处理}
+与一般的数据处理全流程类似，本报告的实现过程主要包括数据的爬取、数据预处理、计算结果分析和数据的可视化展示等几个主要步骤。
+\\
+
+\subsection{数据去重与格式转换}
+首先，将json文件转换为csv格式，先写入表头，后循环读取每一行的数据的key值所对应的value后输出，对应函数实现如下。
+\begin{python}
+def json_to_csv(input_file, output_file):
+    with open(input_file, 'r', encoding='utf-8') as json_file, open(output_file, 'w', encoding='utf-8',
+                                                                    newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['user_id', 'mblogid', 'created_at', 'reposts_count', 'comments_count', 'attitudes_count',
+                         'content', 'pic_urls', 'pic_num', 'isLongText', 'url', 'crawl_time'])
+
+        for line in json_file:
+            data = json.loads(line)
+            user_id = data['_id']
+            mblogid = data['mblogid']
+            created_at = data['created_at']
+            reposts_count = data['reposts_count']
+            comments_count = data['comments_count']
+            attitudes_count = data['attitudes_count']
+            content = data['content'].replace('\n', ' ')  # 将换行符替换为空格，避免输出时自动换行
+            pic_urls = data['pic_urls']
+            pic_num = data['pic_num']
+            islongtext = data['isLongText']
+            url = data['url']
+            crawl_time = data['crawl_time']
+
+            writer.writerow([user_id, mblogid, created_at, reposts_count, comments_count, attitudes_count,
+                             content, pic_urls, pic_num, islongtext, url, crawl_time])
+\end{python}
+
+此外，使用pandas的内置函数drop\_duplicates进行去重处理并使用sort\_value实现按照'created\_at'列的时间降序排列，核心代码如下。
+
+\begin{python}
+df = pd.read_csv('gqt_output.csv')
+df.drop_duplicates(inplace=True)
+df = df.sort_values('created_at', ascending=False)
+df.to_csv('gqt_output.csv', index=False)
+\end{python}
+
+\subsection{文本内容清洗}
+定义正则表达式匹配去除content中的无效文本。
+\begin{python}
+def clean_text(text):
+    text = re.sub(r'【[^】【]+】', '', text)
+    text = re.sub(r'\[[^\]\[]+\]', '', text)
+    text = re.sub(r"(回复)?(//)?\s*@\S*?\s*(:|：| |$)", " ", text)  # 去除正文中的@和回复/转发中的用户名
+    text = re.sub(r'\([^)(]+\)', '', text)
+    text = re.sub(r'\（[^）（]+\）', '', text)
+    text = re.sub(r"#([^#]+)#", "", text)
+    text = re.sub(r"​​​", "", text)
+    text = text.replace("\n", " ")
+    text = re.sub(r"↓↓", "", text)
+    text = re.sub(r"(\s)+", r"\1", text)
+    link_regex = r'http://t\.cn/[\w]+(,)?(?=[^\w]|,|$)'
+    text = re.sub(link_regex, '', text)
+    stop_terms = ['展开', '全文', '展开全文', '一个', '网页', '链接', '?【', 'ue627', 'c【', '10', '一下', '一直',
+                  'u3000', '24', '12',
+                  '30', '?我', '15', '11', '17', '?\\', '显示地图', '原图']
+    for x in stop_terms:
+        text = text.replace(x, "")
+    return text.strip()
+\end{python}

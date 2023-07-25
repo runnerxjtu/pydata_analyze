@@ -1,12 +1,13 @@
 import random
 import datetime
 import pyecharts.options as opts
-from pyecharts.charts import Calendar, Page, WordCloud, HeatMap, Bar
+from pyecharts.charts import Calendar, Page, WordCloud, HeatMap, Bar,Line, Grid
 import pandas as pd
 import collections
 import jieba
 import re
 from pyecharts.faker import Faker
+from pyecharts.commons.utils import JsCode
 
 
 def to_weekhour(file, file_colm):
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     df = pd.read_csv('cleaned_text.csv', parse_dates=['created_at'])
     date_counts = df['created_at'].dt.date.value_counts()
     cal_result = [(date, count) for date, count in date_counts.items()]
-    page = Page(page_title='共青团中央微博分析', layout=Page.DraggablePageLayout)
+    page = Page(page_title='共青团中央微博分析')
     for year in range(2019, 2024):
         calendar = (
             Calendar()
@@ -66,7 +67,49 @@ if __name__ == '__main__':
             )
         )
         page.add(calendar)
+    #绘制转赞评论变化情况
+    df = pd.read_csv('cleaned_text.csv')
+    df['created_at'] = pd.to_datetime(df['created_at'])
+    timeData = df['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S').tolist()
+    repostsData = df['reposts_count'].tolist()
+    commentsData = df['comments_count'].tolist()
+    attitudesData = df['attitudes_count'].tolist()
 
+    line = (
+        Line()
+        .add_xaxis(xaxis_data=timeData)
+        .add_yaxis(
+            series_name="转发",
+            y_axis=repostsData,
+            linestyle_opts=opts.LineStyleOpts(width=1.5),
+        )
+        .add_yaxis(
+            series_name="评论",
+            y_axis=commentsData,
+            linestyle_opts=opts.LineStyleOpts(width=1.5),
+        )
+        .add_yaxis(
+            series_name="点赞",
+            y_axis=attitudesData,
+            linestyle_opts=opts.LineStyleOpts(width=1.5),
+        )
+        .set_global_opts(
+            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+            xaxis_opts=opts.AxisOpts(
+                type_="category",
+                axispointer_opts=opts.AxisPointerOpts(
+                    is_show=True, label=opts.LabelOpts(formatter=JsCode("function(params) {return params.value; }"))
+                ),
+            ),
+            yaxis_opts=opts.AxisOpts(name="数量"),
+            legend_opts=opts.LegendOpts(pos_top='5%'),
+            title_opts=opts.TitleOpts(title="转发、评论、点赞数量随时间变化"),
+            datazoom_opts=[opts.DataZoomOpts()],
+        )
+    )
+    page.add(line)
+
+    #年、月、周、日、时发微频率
     df = pd.read_csv('cleaned_text.csv', parse_dates=['created_at'])
     dateyear_counts = df['created_at'].dt.year.value_counts()
     datemonth_counts = df['created_at'].dt.month.value_counts()
@@ -139,7 +182,7 @@ if __name__ == '__main__':
 
     )
     page.add(c_year, c_month, c_week, c_day, c_hour)
-
+    #词云
     c_wordcloud = (
         WordCloud()
         .add(
@@ -151,7 +194,7 @@ if __name__ == '__main__':
         .set_global_opts(title_opts=opts.TitleOpts(title="top200词云"))
     )
     page.add(c_wordcloud)
-
+    #周时热力图
     c_heatmap = (
         HeatMap()
         .add_xaxis(Faker.clock)

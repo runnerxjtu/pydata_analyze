@@ -53,6 +53,61 @@
     \caption{2023热力图} \label{fig:2023}
 \end{figure}    
 
+\subsection{转赞评变化}
+统计2019年1月至2023年7月，共青团中央所发微博转发、评论、点赞数量随时间的变化情况，并配置datazoom\_opts实现时间拖动缩放。
+\begin{python}
+    df = pd.read_csv('cleaned_text.csv')
+    df['created_at'] = pd.to_datetime(df['created_at'])
+    timeData = df['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S').tolist()
+    repostsData = df['reposts_count'].tolist()
+    commentsData = df['comments_count'].tolist()
+    attitudesData = df['attitudes_count'].tolist()
+    line = (
+        Line()
+        .add_xaxis(xaxis_data=timeData)
+        .add_yaxis(
+            series_name="转发",
+            y_axis=repostsData,
+            linestyle_opts=opts.LineStyleOpts(width=1.5),
+        )
+        .add_yaxis(
+            series_name="评论",
+            y_axis=commentsData,
+            linestyle_opts=opts.LineStyleOpts(width=1.5),
+        )
+        .add_yaxis(
+            series_name="点赞",
+            y_axis=attitudesData,
+            linestyle_opts=opts.LineStyleOpts(width=1.5),
+        )
+        .set_global_opts(
+            tooltip_opts=opts.TooltipOpts(trigger="axis"),
+            xaxis_opts=opts.AxisOpts(
+                type_="category",
+                axispointer_opts=opts.AxisPointerOpts(
+                    is_show=True, label=opts.LabelOpts(formatter=JsCode("function(params) {return params.value; }"))
+                ),
+            ),
+            yaxis_opts=opts.AxisOpts(name="数量"),
+            legend_opts=opts.LegendOpts(pos_top='5%'),
+            title_opts=opts.TitleOpts(title="转发、评论、点赞数量随时间变化"),
+            datazoom_opts=[opts.DataZoomOpts()],
+        )
+    )
+\end{python}
+\par{最终可视化效果实现如下图\ref{fig:3items}所示。}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figure/3items.jpg}
+    \caption{转赞评变化情况} \label{fig:3items}
+\end{figure} 
+\par{可拖动查看具体时间内的转赞评数量。}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=12cm]{figure/3items_s.jpg}
+    \caption{具体时间缩放} \label{fig:3items_s}
+\end{figure} 
+
 \subsection{发微时间统计}
 使用pandas内置函数按照年、月、周、日、时分别统计共青团中央发微时间。
 \begin{python}

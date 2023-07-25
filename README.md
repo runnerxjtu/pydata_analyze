@@ -1,6 +1,5 @@
 # <center>XJTU小学期《python编程语言》课程大作业   
-**西安交通大学课程大作业社交媒体数据分析，选取微博平台共青团中央账号（user_id:3937348351）推文**    
-项目开源地址：[https://github.com/runnerxjtu/pydata_analyze](https://github.com/runnerxjtu/pydata_analyze)
+**西安交通大学课程大作业社交媒体数据分析，选取微博平台共青团中央账号（user_id:3937348351）推文**   
 <br>    
 ### 项目结构
 

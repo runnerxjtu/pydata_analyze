@@ -10,7 +10,7 @@
 >
 >preprocessing
 >>
-> >json2csv.py
+>>json2csv.py
 >>pre_handle.py
 > 
 >analyze
